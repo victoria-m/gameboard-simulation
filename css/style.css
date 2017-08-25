@@ -1,0 +1,10 @@
+body {
+  margin: auto;
+  width: 50%;
+}
+table {
+  width: 100%;
+}
+h1, h4, input {
+  margin: .5em 0em .5em 0em
+}
