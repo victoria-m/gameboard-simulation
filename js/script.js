@@ -45,12 +45,12 @@ function GameResults() {
   // METHODS:
 
   this.display = function() {
-    return "<h4>Number of step one executions</h4><p>" + this.numberOfStepOneExecutions + "</p>\
-            <h4>Reason why game ended</h4><p>" + this.reasonWhyGameEnded + "</p>\
-            <h4>Grid indicating number of times each cell was touched</h4>" + this.generateHtmlTable(this.cellTouchesGrid) + "\
-            <h4>Maximum number of touches for any cell</h4><p>" + this.maxNumberOfCellTouches + "</p>\
-            <h4>Minimum number of touches for any cell</h4><p>" + this.minNumberOfCellTouches + "</p>\
-            <h4>Average number of touches for any cell</h4><p>" + this.avgNumberOfCellTouches + "</p>"
+    return "<h3>Number of step one executions</h3><p>" + this.numberOfStepOneExecutions + "</p>\
+            <h3>Reason why game ended</h3><p>" + this.reasonWhyGameEnded + "</p>\
+            <h3>Grid indicating number of times each cell was touched</h3>" + this.generateHtmlTable(this.cellTouchesGrid) + "\
+            <h3>Maximum number of touches for any cell</h3><p>" + this.maxNumberOfCellTouches + "</p>\
+            <h3>Minimum number of touches for any cell</h3><p>" + this.minNumberOfCellTouches + "</p>\
+            <h3>Average number of touches for any cell</h3><p>" + this.avgNumberOfCellTouches + "</p>"
   }
 
   this.generateHtmlTable = function(array) {
