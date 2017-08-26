@@ -85,7 +85,7 @@ function GameBoard(size) {
 
     // Step 4 - check if we won (if the new position is the upper right-hand corner of the grid
     if ((this.currentPosition.x == 0) && (this.currentPosition.y == (this.size - 1))) {
-      gameResults.reasonWhyGameEnded = "Reached upper right-hand corner of the grid"
+      gameResults.reasonWhyGameEnded = "Reached upper right corner of the grid"
       this.stopGame()
     }
     // OR number of step one executions > max allowed
