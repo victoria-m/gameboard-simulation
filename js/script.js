@@ -1,7 +1,7 @@
 'use strict'
 
 // define globals
-const MARGIN = 60, WIDTH = 50, HEIGHT = 50, FPS = 5, DIRECTIONS = ['up', 'right', 'down', 'left']
+const MARGIN = 60, WIDTH = 50, HEIGHT = 50, FPS = 15, DIRECTIONS = ['up', 'right', 'down', 'left']
 var grid, marker, results, request, numRows, numCols
 
 // set up the canvas and its context
