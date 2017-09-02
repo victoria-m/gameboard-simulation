@@ -7,7 +7,7 @@ var grid, marker, results, request, numRows, numCols
 // set up the canvas and its context
 var canvas = document.getElementById('canvas'), context = canvas.getContext('2d')
 canvas.width = window.innerWidth
-canvas.height = window.innerHeight * 1.8
+canvas.height = window.innerHeight * 1.8 // ensuring the entire canvas in rendered on the page
 
 function main() {
   var rowSelection = document.getElementById('num-rows')
