@@ -1,225 +1,210 @@
-// global variables
-const SIZE = 10
-var gameboard
-var gameResults
+'use strict'
 
-function start() {
-  // define the gameboard and gameResults objects
-  gameResults = new GameResults()
-  gameboard = new GameBoard(SIZE)
+// define globals
+const MARGIN = 60, WIDTH = 50, HEIGHT = 50, FPS = 5, DIRECTIONS = ['up', 'right', 'down', 'left']
+var grid, marker, results, request, numRows, numCols
 
-  gameboard.startGame()
+// set up the canvas and its context
+var canvas = document.getElementById('canvas'), context = canvas.getContext('2d')
+canvas.width = window.innerWidth
+canvas.height = window.innerHeight * 1.8
 
-  outputResults(document.getElementById('game-results'))
+function main() {
+  var rowSelection = document.getElementById('num-rows')
+  var colSelection = document.getElementById('num-cols')
+  numCols = colSelection.options[colSelection.selectedIndex].value
+  numRows = rowSelection.options[rowSelection.selectedIndex].value
+
+  // instantiate the Grid, Marker, and Results
+  grid = new Grid(numRows, numCols, HEIGHT, WIDTH, MARGIN)
+  marker = new Marker(0, numRows - 1)
+  results = new Results()
+
+  // initialize the animation loop
+  window.requestAnimationFrame(step)
 }
 
-function outputResults(htmlElement) {
-  htmlElement.innerHTML = gameResults.display()
+// define the grid
+var Grid = function(numRows, numCols, height, width, margin) {
+  this.numRows = numRows
+  this.numCols = numCols
+  this.height = height
+  this.width = width
+  this.margin = margin
 }
 
+Grid.prototype.draw = function(marker) {
+  for (var i = 0; i < this.numCols; ++i) {
+    for (var j = 0; j < this.numRows; ++j) {
+      // set the default fill color:
+      context.fillStyle = 'black'
+
+      // enforce boundaries for the marker:
+      if (marker.x < 0) marker.x = 0
+      if (marker.y < 0) marker.y = 0
+      if (marker.x > this.numCols - 1) marker.x = this.numCols - 1
+      if (marker.y > this.numRows - 1) marker.y = this.numRows - 1
+
+      // set the marker fill color:
+      if (marker.x == i && marker.y == j) {
+        context.fillStyle = 'red'
+      }
+
+      // fill the current rectangle:
+      context.fillRect(i * this.margin, j * this.margin, this.width, this.height)
+    }
+  }
+}
+
+// define Marker
+var Marker = function(x, y) {
+  this.x = x
+  this.y = y
+  this.direction = ""
+  this.steps = 0
+  this.moving = true
+  this.history = []
+
+  // placing the marker counts as a touch
+  this.history.push(new Cell(this.x, this.y))
+}
+
+Marker.prototype.prepareForMove = function() {
+  // Step 1: generate direction
+  this.direction = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)]
+  ++results.stepOneExecs
+
+  // Step 2: generate step from 0 to 2
+  this.steps = Math.floor(Math.random() * 3)
+}
+
+Marker.prototype.move = function() {
+  this.prepareForMove()
+
+  // Step 3: try to move the marker
+  switch (this.direction) {
+  case 'up':
+    if (this.y - this.steps >= 0) this.y -= this.steps
+    break
+  case 'right':
+    if (this.x + this.steps < grid.numCols) this.x += this.steps
+    break
+  case 'down':
+    if (this.y + this.steps < grid.numRows) this.y += this.steps
+    break
+  case 'left':
+    if (this.x - this.steps >= 0) this.x -= this.steps
+    break
+  }
+
+  // check if game ended
+  if (this.x == grid.numCols - 1 && this.y == 0) {
+    results.gameEndReason = "Marker touched right corner"
+    this.moving = false
+  }
+  else if (results.stepOneExecs > results.MAX_STEP_ONE_EXECS) {
+    results.gameEndReason = "Exceeded max number of step one executions"
+    this.moving = false
+  }
+
+  // push to marker's move history if its position changes
+  if ((this.history[this.history.length - 1].x != this.x) || (this.history[this.history.length - 1].y != this.y)) {
+    this.history.push(new Cell(Math.abs(this.x), Math.abs(this.y)))
+  }
+
+}
+
+// define Cell
 function Cell(x, y) {
   this.x = x
   this.y = y
 }
 
-function GameBoard(size) {
-  // PROPERTIES:
-  this.size = size
+// describe a frame step
+function step() {
+  setTimeout(function() {
+    request = requestAnimationFrame(step)
 
-  // build the NxN grid
-  this.grid = new Array(size)
-
-  // fill the grid with cells, each cell contains an (x, y) coordinate
-  for (var row = 0; row < size; ++row) {
-    this.grid[row] = new Array()
-
-    for (var col = 0; col < size; ++col) {
-      this.grid[row][col] = new Cell(row, col)
+    if (marker.moving) {
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      marker.move()
+      grid.draw(marker)
+    } else {
+      window.cancelAnimationFrame(request)
+      results.process()
+      results.output(document.getElementById('results'))
     }
-  }
+  }, 1000 / FPS)
+}
 
-  // set the starting position to the lower left-hand cell
-  this.currentPosition = new Cell(this.size - 1, 0)
-  // the marker touched the cell, so update the cell touches grid
-  gameResults.updateCellTouchesGrid(this.size - 1, 0)
+// populate the Select elements with options
+function fillDropdowns() {
+  const MIN_DIMENSIONS = 5, MAX_DIMENSIONS = 20
+  var rowSelect = document.getElementById('num-rows'), colSelect = document.getElementById('num-cols')
 
-  // indicates whether the game is running or stopped
-  this.running = false
-
-  // maximum number of step one executions allowed, used when checking if game should end
-  const MAX_NUM_STEP_ONE_EXECUTIONS_ALLOWED = 1000000
-
-  // METHODS:
-  this.move = function() {
-    // Step 1 - generate a random direction
-    var direction = this.generateRandomDirection()
-    // game results - increase number of step 1 executions
-    gameResults.numberOfStepOneExecutions += 1
-
-    // Step 2 - generate a random number of steps
-    var numberOfSteps = this.generateRandomNumberOfSteps()
-
-    // Step 3 - if the move is possible and update the grid position
-    switch (direction) {
-      case 'up':
-        if ((this.currentPosition.x - numberOfSteps) >= 0) {
-          this.updateCurrentPosition((this.currentPosition.x - numberOfSteps), this.currentPosition.y)
-        }
-        break
-      case 'right':
-        if ((this.currentPosition.y + numberOfSteps) <= (this.size - 1)) {
-          this.updateCurrentPosition(this.currentPosition.x, (this.currentPosition.y + numberOfSteps))
-        }
-        break
-      case 'down':
-        if ((this.currentPosition.x + numberOfSteps) <= (this.size - 1)) {
-          this.updateCurrentPosition((this.currentPosition.x + numberOfSteps), this.currentPosition.y)
-        }
-        break
-      case 'left':
-        if ((this.currentPosition.y - numberOfSteps) >= 0) {
-          this.updateCurrentPosition(this.currentPosition.x, (this.currentPosition.y - numberOfSteps))
-        }
-        break
-    }
-
-    // Step 4 - check if we won (if the new position is the upper right-hand corner of the grid
-    if ((this.currentPosition.x == 0) && (this.currentPosition.y == (this.size - 1))) {
-      gameResults.reasonWhyGameEnded = "Reached upper right corner of the grid"
-      this.stopGame()
-    }
-    // OR number of step one executions > max allowed
-    else if (gameResults.numberOfStepOneExecutions > MAX_NUM_STEP_ONE_EXECUTIONS_ALLOWED) {
-      gameResults.reasonWhyGameEnded = "Number of step one executions exceeded " + MAX_NUM_STEP_ONE_EXECUTIONS_ALLOWED
-      this.stopGame()
-    }
-  }
-
-  this.updateCurrentPosition = function(x, y) {
-    this.currentPosition = new Cell(x, y)
-
-    gameResults.updateCellTouchesGrid(x, y)
-  }
-
-  this.generateRandomDirection = function() {
-    var directions = ['up', 'right', 'down', 'left']
-
-    // get random direction from the array
-    return directions[Math.floor(Math.random() * directions.length)]
-  }
-
-  this.generateRandomNumberOfSteps = function() {
-    var steps = [0, 1, 2]
-
-    // get random step from the array
-    return steps[Math.floor(Math.random() * steps.length)]
-  }
-
-  this.stopGame = function() {
-    gameResults.updateAvgNumberOfCellTouches()
-
-    this.running = false
-  }
-
-  this.startGame = function() {
-    this.running = true
-
-    // move the marker until game ends
-    while(this.running) {
-      this.move()
-    }
+  // fill each select list with options ranging from min to max grid dimensions
+  for (var i = MIN_DIMENSIONS; i <= MAX_DIMENSIONS; ++i) {
+    rowSelect.options[rowSelect.options.length] = new Option(i, i)
+    colSelect.options[colSelect.options.length] = new Option(i, i)
   }
 
 }
 
-
-function GameResults() {
-  // PROPERTIES:
-  this.reasonWhyGameEnded = ""
-  this.numberOfStepOneExecutions = 0
-
-  // 2d array containing the number of times each cell was touched
-  this.cellTouchesGrid = new Array(SIZE)
-
-  // initialize the cell touches grid with 0's - since grid cells have not been touched yet
-  for (var row = 0; row < SIZE; ++row) {
-    this.cellTouchesGrid[row] = new Array()
-    for (var col = 0; col < SIZE; ++col) {
-      this.cellTouchesGrid[row][col] = 0
-    }
-  }
-
-  this.maxNumberOfCellTouches = 0
-  this.minNumberOfCellTouches = 0
-  this.avgNumberOfCellTouches = 0
-
-  // METHODS:
-  // returns a string containing game simulation results in HTML format
-  this.display = function() {
-    return "<h3>Number of step one executions</h3><p>" + this.numberOfStepOneExecutions + "</p>\
-            <h3>Reason why game ended</h3><p>" + this.reasonWhyGameEnded + "</p>\
-            <h3>Grid indicating number of times each cell was touched</h3>" + this.generateHtmlTable(this.cellTouchesGrid) + "\
-            <h3>Maximum number of touches for any cell</h3><p>" + this.maxNumberOfCellTouches + "</p>\
-            <h3>Minimum number of touches for any cell</h3><p>" + this.minNumberOfCellTouches + "</p>\
-            <h3>Average number of touches for any cell</h3><p>" + this.avgNumberOfCellTouches + "</p>"
-  }
-
-
-  this.generateHtmlTable = function(grid) {
-    var gridHtml = "<table>"
-
-    for (var row in grid) {
-      gridHtml += "<tr>"
-      for (var col in grid) {
-        gridHtml += "<td>" + grid[row][col] + "</td>"
-      }
-      gridHtml += "</tr>"
-    }
-
-    gridHtml += "</table>"
-    return gridHtml
-  }
-
-  // increments a  touched cell in the cell touches grid
-  this.updateCellTouchesGrid = function(x, y) {
-    this.cellTouchesGrid[x][y] += 1
-
-    // update the max and min number of touches
-    this.updateMaxNumberOfCellTouches(this.cellTouchesGrid[x][y])
-    this.updateMinNumberOfCellTouches()
-  }
-
-  this.updateMaxNumberOfCellTouches = function(mostRecentCellTouchValue) {
-    // update max number of cell touches if less than most recent cell touch value
-    if (this.maxNumberOfCellTouches < mostRecentCellTouchValue) this.maxNumberOfCellTouches = mostRecentCellTouchValue
-  }
-
-  this.updateMinNumberOfCellTouches = function() {
-    var min = this.cellTouchesGrid[0][0]
-
-    // search for a new min every time since number of times touched for each cell increases for each move
-    for (var row in this.cellTouchesGrid) {
-      for (var col in this.cellTouchesGrid) {
-        if (this.cellTouchesGrid[row][col] < min) min = this.cellTouchesGrid[row][col]
-      }
-    }
-
-    // finally, update the game results min value
-    this.minNumberOfCellTouches = min
-  }
-
-  // compute the average number of cell touches once game has ended
-  this.updateAvgNumberOfCellTouches = function() {
-    var totalNumberOfTouches = 0
-    var totalNumberOfCells = SIZE * SIZE
-
-    for (var row in this.cellTouchesGrid) {
-      for (var col in this.cellTouchesGrid) {
-        totalNumberOfTouches += this.cellTouchesGrid[row][col]
-      }
-    }
-
-    this.avgNumberOfCellTouches = (totalNumberOfTouches / totalNumberOfCells)
-  }
-
+function Results() {
+  this.gameEndReason = ""
+  this.stepOneExecs = 0
+  this.MAX_STEP_ONE_EXECS = 1000000
+  this.cellTouches = new Array()
+  this.maxTouches = 0
+  this.minTouches = 0
+  this.avgTouches = 0
 }
+
+Results.prototype.process = function() {
+  // build the cell touches grid, fill it with 0's
+  for (var i = 0; i < grid.numRows; ++i) {
+    this.cellTouches[i] = new Array()
+    for (var j = 0; j < grid.numCols; ++j) { this.cellTouches[i][j] = 0 }
+  }
+
+  // increment cell touches grid's indices for every set of marker coordinates
+  for (var i = 0; i < marker.history.length; ++i) { ++this.cellTouches[marker.history[i].x][marker.history[i].y] }
+
+  // get min, max, avg
+  var sum = 0
+
+  // initialize min to one of the cell touch values
+  this.minTouches = this.cellTouches[0][0]
+
+  for (var i = 0; i < this.cellTouches.length; ++i) {
+    for (var j = 0; j < this.cellTouches[i].length; ++j) {
+      if (this.cellTouches[i][j] > this.maxTouches) this.maxTouches = this.cellTouches[i][j]
+      if (this.cellTouches[i][j] < this.minTouches) this.minTouches = this.cellTouches[i][j]
+      sum += this.cellTouches[i][j]
+    }
+  }
+
+  this.avgTouches = sum / (grid.numRows * grid.numCols)
+}
+
+Results.prototype.toHtml = function() {
+  return "<h3>Number of step one executions</h3><p>" + this.stepOneExecs + "</p>\
+          <h3>Reason why game ended</h3><p>" + this.gameEndReason + "</p>\
+          <h3>Grid indicating number of times each cell was touched</h3>" + this.toHtmlTable(this.cellTouches) + "\
+          <h3>Maximum number of touches for any cell</h3><p>" + this.maxTouches + "</p>\
+          <h3>Minimum number of touches for any cell</h3><p>" + this.minTouches + "</p>\
+          <h3>Average number of touches for any cell</h3><p>" + this.avgTouches + "</p>"
+}
+
+Results.prototype.toHtmlTable = function() {
+  var table = "<table>"
+
+  for (var i = 0; i < this.cellTouches.length; ++i) {
+    table += "<tr>"
+    for (var j = 0; j < this.cellTouches[i].length; ++j) { table += "<td>" + this.cellTouches[i][j] + "</td>" }
+    table += "</tr>"
+  }
+  return table += "</table>"
+}
+
+Results.prototype.output = function(element) { element.innerHTML = this.toHtml() }

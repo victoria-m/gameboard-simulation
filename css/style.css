@@ -1,6 +1,6 @@
 body {
   margin: auto;
-  width: 50%;
+  width: 80%;
 }
 
 table {
@@ -8,6 +8,9 @@ table {
 }
 h1, h4, input {
   margin: .5em 0em .5em 0em
+}
+input[type=submit] {
+  margin-left: 1em;
 }
 
 .navigation {
@@ -18,4 +21,23 @@ h1, h4, input {
 
 .navigation a {
   text-decoration: none;
+}
+
+.cell {
+  float: left;
+  width: 50px;
+  height: 50px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+  background-color: blue;
+}
+.content{
+  clear: both;
+}
+canvas {
+  width: 100%;
+}
+
+#results {
+  clear: both;
 }
