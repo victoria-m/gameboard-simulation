@@ -9,8 +9,7 @@
     <link rel="stylesheet" href="css/style.css">
   </head>
 
-  <body>
-    <script src="js/script.js"></script>
+  <body onload="fillDropdowns()">
 
     <div class="navigation">
       <a href="index.html">Index</a>
@@ -22,9 +21,21 @@
     </div>
 
     <div class="content">
-      <input type="submit" value="Start Game" onclick="start()" />
+      <p>Results will be displayed at the bottom of the page.</p>
 
-      <div id="game-results"></div>
+      <label for="num-rows">Number of rows</label>
+      <select id="num-rows"></select>
+
+      <label for="num-cols">Number of cols</label>
+      <select id="num-cols"></select>
+
+      <input type="submit" value="Start Game" onclick="main()" />
+
+      <canvas id="canvas"></canvas>
+
+      <div id="results"></div>
+
+      <script src="js/script.js"></script>
     </div>
   </body>
 </html>
