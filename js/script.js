@@ -115,7 +115,7 @@ Marker.prototype.move = function() {
 }
 
 // define Cell
-function Cell(x, y) {
+var Cell = function (x, y) {
   this.x = x
   this.y = y
 }
@@ -150,7 +150,7 @@ function fillDropdowns() {
 
 }
 
-function Results() {
+var Results = function() {
   this.gameEndReason = ""
   this.stepOneExecs = 0
   this.MAX_STEP_ONE_EXECS = 1000000
