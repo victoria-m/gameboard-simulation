@@ -5,6 +5,9 @@ Pretend there is a 10 by 10 grid sketched out on a metal wall. You place a red m
 
 `gameboard-simulation` animates this scenario, updating the gameboard each time the marker is moved and displaying results when the game ends. The marker is placed at the lower left corner of the board and the game ends once the marker reaches the upper right corner or step 1 (see Steps) has been repeated over a million times.
 
+## Website
+https://victoria-m.github.io/gameboard-simulation/index.html
+
 ## How to Start
 Input your desired number of rows and columns for the gameboard dimensions (which are set to 5 by default), and click **Start Game**.
 
