@@ -23,11 +23,11 @@ Input your desired number of rows and columns for the gameboard dimensions (whic
 ## Results
 After the simulation is complete, the following will be displayed below the animation:
 
-Number of step one executions
-Reason why game ended
-Grid indicating number of times each cell was touched
-Maximum number of touches for any cell
-Minimum number of touches for any cell
-Average number of touches for any cell
+- Number of step one executions
+- Reason why game ended
+- Grid indicating number of times each cell was touched
+- Maximum number of touches for any cell
+- Minimum number of touches for any cell
+- Average number of touches for any cell
 
 This information is contained within a `Result` object.
