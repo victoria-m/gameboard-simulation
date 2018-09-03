@@ -1,6 +1,6 @@
 # gameboard-simulation
 
-![Gameboard Sim](/img/gameboard_sim.gif "Gameboard Sim")
+![Gameboard Sim](/img/gameboard.gif "Gameboard Sim")
 
 ## Summary
 Pretend there is a 10 by 10 grid sketched out on a metal wall. You place a red magnetic marker on the grid and move it around following a series of steps.
